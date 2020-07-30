@@ -105,6 +105,10 @@
       <DependentUpon>Resource1.resx</DependentUpon>
     </Compile>
     <Content Include="App.ico" />
+    <None Include="Resources\solar_panel.PNG" />
+    <None Include="Resources\reloj.PNG" />
+    <None Include="Resources\explosion.PNG" />
+    <None Include="Resources\base.PNG" />
     <None Include="Resources\pizza.png" />
     <None Include="Resources\box.png" />
     <None Include="Resources\drone.png" />

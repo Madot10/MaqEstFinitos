@@ -8,6 +8,7 @@ namespace MEF
 	{
 		public bool activo;	// Indica si el objeto es visible o no
 		public int x,y;		// Coordenadas del objeto
+        public bool esperando; //Indica si esta en espera
 	}
 
 
@@ -20,6 +21,8 @@ namespace MEF
 		public enum  estados
 		{
 			BUSQUEDA,
+            LLEVARMICRO,
+            DEVOLVER,
 			NBUSQUEDA,
 			IRBATERIA,
 			RECARGAR,
@@ -37,9 +40,10 @@ namespace MEF
 		// Arreglo para guardar una copia de los objetos
 		private S_objeto[] objetos = new S_objeto[10];
 		private S_objeto bateria;
+        private S_objeto estBase;
 
-		// Variable del indice del objeto que buscamos
-		private int indice;
+        // Variable del indice del objeto que buscamos
+        private int indice;
 
 		// Variable para la energia;
 		private int energia;
@@ -59,6 +63,11 @@ namespace MEF
 		{
 			get {return Estado;}
 		}
+
+        public int EnergiaM
+        {
+            get { return energia; }
+        }
 			
 		public CMaquina()
 		{
@@ -70,18 +79,19 @@ namespace MEF
 			x=320;		// Coordenada X
 			y=240;		// Coordenada Y
 			indice=-1;	// Empezamos como si no hubiera objeto a buscar
-			energia=800;
+			energia=1000;
 		}
 
-		public void Inicializa(ref S_objeto [] Pobjetos, S_objeto Pbateria)
+		public void Inicializa(ref S_objeto [] Pobjetos, S_objeto Pbateria, S_objeto Pbase)
 		{
 			// Colocamos una copia de los objetos y la bateria
 			// para pode trabajar internamente con la informacion
 
 			objetos=Pobjetos;
 			bateria=Pbateria;
+            estBase = Pbase;
 
-		}
+        }
 
 		public void Control()
 		{
@@ -98,22 +108,56 @@ namespace MEF
 					{
 						// Desactivamos el objeto encontrado
 						objetos[indice].activo=false;
-						
-						// Cambiamos de estado
-						Estado=(int)estados.NBUSQUEDA;
+                        // Habilitamos espera
+                        objetos[indice].esperando = true;
+
+                        // Cambiamos de estado
+                        Estado =(int)estados.LLEVARMICRO;
 
 					}
-					else if(energia<400) // Checamos condicion de transicion
-						Estado=(int)estados.IRBATERIA;
 
-					break;
+                    if (energia < 400) // Checamos condicion de transicion
+                        Estado = (int)estados.IRBATERIA;
+
+                    break;
+
+                  
+                case (int)estados.LLEVARMICRO:
+                    // Llevamos a cabo la accion del estado
+                    LlevarComida();
+
+                    // Verificamos por transicion
+                    if (x == estBase.x && y == estBase.y)
+                        Estado = (int)estados.DEVOLVER;
+
+                    if (energia == 0)
+                        Estado = (int)estados.MUERTO;
+
+                    break;
+
+                case (int)estados.DEVOLVER:
+                    Devolver();
+
+                    if (x == objetos[indice].x && y == objetos[indice].y)
+                    {
+                        // Desactivamos el objeto encontrado
+                        objetos[indice].activo = false;
+                        // Fin de la espera
+                        objetos[indice].esperando = false;
+
+
+                        // Cambiamos de estado
+                        Estado = (int)estados.NBUSQUEDA;
+
+                    }
+                    break;
 
 				case (int)estados.NBUSQUEDA:
 					// Llevamos a cabo la accion del estado
 					NuevaBusqueda();
 
 					// Verificamos por transicion
-					if(indice==-1)	// Si ya no hay objetos, entonces aleatorio
+                    if (indice==-1)	// Si ya no hay objetos, entonces aleatorio
 						Estado=(int)estados.ALEATORIO;
 					else
 						Estado=(int)estados.BUSQUEDA;
@@ -128,7 +172,7 @@ namespace MEF
 					if(x==bateria.x && y==bateria.y)				
 						Estado=(int)estados.RECARGAR;
 
-					if(energia==0)
+					if(energia<=0)
 						Estado=(int)estados.MUERTO;
 
 					break;
@@ -177,12 +221,34 @@ namespace MEF
 			if(y<objetos[indice].y)
 				y++;
 			else if(y>objetos[indice].y)
-				y--;
+				y --;
 
 			// Disminuimos la energia
 			energia--;
 
 		}
+
+        public void LlevarComida()
+        {
+            //Nos dirigimos hacia la base
+
+            if (x < estBase.x)
+                x ++;
+            else if (x > estBase.x)
+                x --;
+
+            if (y < estBase.y)
+                y ++;
+            else if (y > estBase.y)
+                y --;
+
+            //Consumo
+            energia--;
+        }
+
+        public void Devolver() {
+            Busqueda();
+        }
 
 		public void NuevaBusqueda()
 		{
@@ -225,12 +291,12 @@ namespace MEF
 			if(x<bateria.x)
 				x++;
 			else if(x>bateria.x)
-				x--;
+				x --;
 
-			if(y<bateria.y)
-				y++;
-			else if(y>bateria.y)
-				y--;
+            if (y < bateria.y)
+                y++;
+            else if (y > bateria.y)
+                y--;
 
 			// Disminuimos la energia
 			energia--;
@@ -240,7 +306,7 @@ namespace MEF
 		public void Recargar()
 		{
 			// En esta funcion colocamos la logica del estado Recargar
-			energia=1000;
+			energia=1500;
 
 		}
 
